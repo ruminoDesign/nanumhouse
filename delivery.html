@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>식사배달 · 나눔의 집 보조사업</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: same bright band as index; KPI row, category panel, account table + monthly bars, then searchable ledger */
+:root {
+  --bg: #f5f8fc;
+  --surface: #ffffff;
+  --ink: #1f2a37;
+  --muted: #627084;
+  --line: #e3e9f1;
+  --sky: #2f7de1;
+  --sky-soft: #e4effc;
+  --leaf: #1a9e6e;
+  --leaf-soft: #def4ea;
+  --sun: #ffc23d;
+  --sun-soft: #fff3d1;
+  --warn: #d4572a;
+  --warn-soft: #fbe6dd;
+  --c: var(--sky);          /* 이 페이지의 사업 색 */
+  --c-soft: var(--sky-soft);
+  --display: "Gowun Batang", "Nanum Myeongjo", serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  color-scheme: light;
+}
+[data-program="delivery"] { --c: var(--leaf); --c-soft: var(--leaf-soft); }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.content { display: contents; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.6; }
+a { color: inherit; }
+a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+/* ── header band ── */
+.band {
+  position: relative; overflow: hidden; border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 90% 20%, var(--sun-soft) 0 110px, transparent 111px),
+    radial-gradient(circle at 97% 90%, var(--c-soft) 0 170px, transparent 171px),
+    linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+}
+.band::after {
+  content: ""; position: absolute; right: 8%; top: 36%; width: 120px; height: 60px; opacity: .55; pointer-events: none;
+  background:
+    radial-gradient(ellipse 14px 30px at 20% 60%, transparent 11px, var(--sun) 12px 14px, transparent 15px),
+    radial-gradient(ellipse 14px 30px at 50% 40%, transparent 11px, var(--sun) 12px 14px, transparent 15px),
+    radial-gradient(ellipse 14px 30px at 80% 60%, transparent 11px, var(--sun) 12px 14px, transparent 15px);
+}
+.wrap { max-width: 1000px; margin: 0 auto; padding-inline: 20px; }
+.band .wrap { position: relative; z-index: 1; padding-block: 24px 34px; display: grid; gap: 14px; }
+.topline { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.org { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; text-decoration: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px 5px 6px; }
+.org .dot { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(var(--sky) 0 33%, var(--leaf) 0 66%, var(--sun) 0); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs a { text-decoration: none; font-size: 0.88rem; padding: 5px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.tabs a:hover { border-color: var(--c); }
+.tabs a[aria-current="page"] { background: var(--c); border-color: var(--c); color: var(--surface); font-weight: 600; }
+.eyebrow { font-size: 0.82rem; color: var(--muted); letter-spacing: 0.04em; }
+h1 { font-family: var(--display); font-weight: 700; margin: 0; font-size: clamp(2rem, 6vw, 3rem); line-height: 1.2; }
+h1 em { font-style: normal; background: linear-gradient(transparent 62%, var(--sun-soft) 62%); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 0.8rem; padding: 3px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.chip b { color: var(--ink); font-weight: 600; }
+
+/* ── main ── */
+main.wrap { padding-block: 28px 56px; display: grid; gap: 24px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; min-width: 0; }
+h2 { font-size: 1.05rem; margin: 0 0 4px; }
+.note { font-size: 0.8rem; color: var(--muted); margin: 0 0 16px; }
+
+/* KPI */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 2px; min-width: 0; }
+.kpi.hl { background: var(--c-soft); border-color: transparent; }
+.kpi .label { font-size: 0.8rem; color: var(--muted); }
+.kpi .value { font-size: clamp(1.2rem, 2.8vw, 1.6rem); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kpi.hl .value { color: var(--c); }
+.kpi .value small { font-size: 0.8rem; font-weight: 500; color: var(--muted); margin-left: 2px; }
+.kpi .sub { font-size: 0.78rem; color: var(--muted); }
+.pill { display: inline-block; font-size: 0.74rem; font-weight: 600; padding: 1px 9px; border-radius: 999px; background: var(--surface); color: var(--c); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* category */
+.cats { display: grid; gap: 18px; }
+.cat-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+.cat-name { font-weight: 600; font-size: 1.02rem; }
+.cat-amt { font-variant-numeric: tabular-nums; }
+.cat-amt b { font-size: 1.08rem; }
+.cat-amt .r { margin-left: 10px; font-weight: 700; color: var(--c); }
+.cat-amt .s { margin-left: 8px; font-size: 0.82rem; color: var(--muted); }
+.track { position: relative; height: 14px; margin-top: 6px; border-radius: 7px; background: var(--c-soft); overflow: hidden; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: 7px; background: var(--c); width: 0; transition: width .9s cubic-bezier(.2,.7,.2,1); }
+.scale { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+.donut-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 24px; align-items: center; }
+.donut { width: 150px; height: 150px; border-radius: 50%; position: relative; }
+.donut::after { content: ""; position: absolute; inset: 22px; border-radius: 50%; background: var(--surface); }
+.donut span { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; text-align: center; font-size: 0.75rem; color: var(--muted); line-height: 1.3; }
+.donut b { display: block; font-size: 1.35rem; color: var(--c); font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .donut-row { grid-template-columns: minmax(0, 1fr); } .donut { margin: 0 auto; } }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; }
+@media (max-width: 800px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* tables */
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+th:first-child, td:first-child { text-align: left; }
+tbody tr:hover { background: var(--bg); }
+tfoot td { font-weight: 700; border-bottom: none; }
+.tag { display: inline-block; font-size: 0.72rem; padding: 1px 8px; border-radius: 999px; background: var(--c-soft); color: var(--c); font-weight: 600; }
+.tag.op { background: var(--sun-soft); color: #8a6100; }
+
+/* monthly */
+.months { display: grid; gap: 16px; }
+.mrow { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 10px; align-items: start; }
+.mrow .m { font-weight: 600; color: var(--muted); padding-top: 1px; }
+.mbar { height: 12px; border-radius: 6px; background: var(--c); width: 0; transition: width .9s cubic-bezier(.2,.7,.2,1); }
+.mval { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; font-variant-numeric: tabular-nums; margin-top: 3px; }
+.mval span:last-child { color: var(--muted); }
+
+/* ledger */
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.tools input, .tools select { font: inherit; font-size: 0.9rem; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.tools input { flex: 1 1 220px; min-width: 0; }
+.ledger { max-height: 480px; overflow: auto; border-radius: 10px; }
+#tx thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+#tx td:nth-child(3) { white-space: normal; text-align: left; min-width: 14em; color: var(--muted); }
+#tx th:nth-child(3) { text-align: left; }
+.txsum { margin: 10px 0 0; font-size: 0.85rem; color: var(--muted); }
+.txsum b { color: var(--ink); }
+
+.status { padding: 18px 20px; border-radius: 14px; border: 1px dashed var(--line); color: var(--muted); background: var(--surface); }
+.status.err { border-color: var(--warn); color: var(--warn); }
+.foot { font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+@media (prefers-reduced-motion: reduce) { .fill, .mbar { transition: none; } }
+</style>
+</head>
+<body>
+<div data-program="delivery" id="app">
+
+<header class="band">
+  <div class="wrap">
+    <div class="topline">
+      <a class="org" href="index.html"><span class="dot" aria-hidden="true"></span>계림동성당 나눔의 집</a>
+      <nav class="tabs" aria-label="페이지">
+        <a href="index.html">전체</a>
+        <a href="restaurant.html" id="tab-restaurant">경로식당</a>
+        <a href="delivery.html" id="tab-delivery">식사배달</a>
+      </nav>
+    </div>
+    <span class="eyebrow">보조사업 집행 상황</span>
+    <h1 id="pageTitle"></h1>
+    <div class="meta">
+      <span class="chip">집계 컬럼 <b id="cols">—</b></span>
+      <span class="chip">집행 기간 <b id="period">—</b></span>
+      <span class="chip">최종 기록일 <b id="lastDate">—</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="status" id="status">데이터를 불러오는 중입니다…</p>
+
+  <div id="content" class="content" hidden>
+    <section class="kpis" id="kpis" aria-label="요약"></section>
+
+    <section class="panel">
+      <h2>category별 집행액</h2>
+      <p class="note">막대 길이는 보조금 수입 대비 비율입니다. 굵은 숫자가 수입 대비, 회색 숫자가 전체 집행액 중 비중입니다.</p>
+      <div class="donut-row">
+        <div class="donut" id="donut"><span>집행률<b id="donutRate"></b></span></div>
+        <div class="cats" id="cats"></div>
+      </div>
+    </section>
+
+    <div class="grid2">
+      <section class="panel">
+        <h2>계정과목별 집행액</h2>
+        <p class="note">계정과목마다 몇 건, 얼마를 썼는지 보여줍니다.</p>
+        <div class="tbl"><table id="acc"></table></div>
+      </section>
+      <section class="panel">
+        <h2>월별 집행액</h2>
+        <p class="note">오른쪽 숫자는 그달까지 누적 집행률입니다.</p>
+        <div class="months" id="months"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>집행 내역</h2>
+      <p class="note">계정과목이나 내용(품목)으로 찾을 수 있습니다.</p>
+      <div class="tools">
+        <input id="q" type="search" placeholder="예: 수박, 전기요금" aria-label="집행 내역 검색">
+        <select id="fMonth" aria-label="월 선택"></select>
+        <select id="fCat" aria-label="category 선택"></select>
+      </div>
+      <div class="ledger"><table id="tx"></table></div>
+      <p class="txsum" id="txsum"></p>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <span>자료: <span id="srcFile"></span> · 금액 단위 원</span>
+    <span>집행률 = 집행액 ÷ 보조금 수입</span>
+  </footer>
+</main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ── 설정 ─────────────────────────────────────────
+     CSV_FILE : 같은 저장소에 올린 CSV 파일 이름
+     PROGRAM  : 이 페이지가 보여줄 사업 ("restaurant" 또는 "delivery")
+     식사배달 페이지는 이 파일을 복사해 PROGRAM만 "delivery"로 바꾸면 됩니다. */
+  var CSV_FILE = "nanum202609.csv";
+  var PROGRAM = "delivery";
+
+  var PROGRAMS = {
+    restaurant: { name: "경로식당", income: "식당수입",  expense: "식당지출" },
+    delivery:   { name: "식사배달", income: "도시락수입", expense: "도시락지출" }
+  };
+  var CATEGORY_MAP = {
+    "주부식비": ["무료급식", "부식비(보조금)", "식사배달(배달보조)", "주식비(보조금)"],
+    "운영비": ["차량비(배달보조)", "소모품비(보조금)", "공공요금(배달보조)", "공공요금(보조금)",
+             "연료비(배달보조)", "연료비(보조금)", "기타경비(보조금)"]
+  };
+
+  /* ── 유틸 ── */
+  var $ = function (id) { return document.getElementById(id); };
+  var won = function (n) { return Math.round(n).toLocaleString("ko-KR"); };
+  var pct = function (a, b) { return b ? a / b * 100 : 0; };
+  var f1 = function (n) { return n.toFixed(1); };
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+  function toNum(v) { var n = parseFloat(String(v == null ? "" : v).replace(/,/g, "").trim()); return isFinite(n) ? n : 0; }
+
+  function parseCSV(text) {
+    text = text.replace(/^﻿/, "");
+    var rows = [], row = [], f = "", q = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ",") { row.push(f); f = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(f); f = "";
+        if (row.length > 1 || row[0] !== "") rows.push(row);
+        row = [];
+      } else f += c;
+    }
+    if (f !== "" || row.length) { row.push(f); rows.push(row); }
+    var head = rows.shift().map(function (h) { return h.trim(); });
+    return rows.map(function (r) { var o = {}; head.forEach(function (h, j) { o[h] = (r[j] || "").trim(); }); return o; });
+  }
+  function categoryOf(r) {
+    if (r.category && r.category !== "NA") return r.category;
+    for (var k in CATEGORY_MAP) if (CATEGORY_MAP[k].indexOf(r["계정과목"]) >= 0) return k;
+    return "기타";
+  }
+  function monthOf(r) {
+    if (r.month && r.month !== "NA") return parseInt(r.month, 10);
+    var m = /^\d{4}-(\d{2})/.exec(r["날짜"] || ""); return m ? parseInt(m[1], 10) : 0;
+  }
+  var CAT_COLORS = ["var(--c)", "var(--sun)", "#9aa7b8", "#c9a7e8"];
+
+  /* ── 집계 ── */
+  function summarize(rows, p) {
+    var d = { income: 0, expense: 0, cats: {}, accs: {}, months: {}, tx: [] };
+    rows.forEach(function (r) {
+      var a = toNum(r[p.income]), b = toNum(r[p.expense]), m = monthOf(r);
+      if (a > 0 || b > 0) d.months[m] = d.months[m] || { inc: 0, exp: 0 };
+      if (a > 0) { d.income += a; d.months[m].inc += a; }
+      if (b > 0) {
+        var c = categoryOf(r), acc = r["계정과목"] || "(미지정)";
+        d.expense += b; d.months[m].exp += b;
+        d.cats[c] = (d.cats[c] || 0) + b;
+        d.accs[acc] = d.accs[acc] || { amt: 0, n: 0, cat: c };
+        d.accs[acc].amt += b; d.accs[acc].n++;
+        d.tx.push({ date: r["날짜"], acc: acc, memo: r["내용"] || "", amt: b, cat: c, m: m });
+      }
+    });
+    d.cats = Object.keys(d.cats).map(function (k) { return [k, d.cats[k]]; }).sort(function (x, y) { return y[1] - x[1]; });
+    d.accs = Object.keys(d.accs).map(function (k) { return [k, d.accs[k]]; }).sort(function (x, y) { return y[1].amt - x[1].amt; });
+    d.months = Object.keys(d.months).map(Number).sort(function (x, y) { return x - y; }).map(function (k) { return [k, d.months[k].inc, d.months[k].exp]; });
+    d.tx.sort(function (x, y) { return x.date < y.date ? 1 : x.date > y.date ? -1 : 0; });
+    return d;
+  }
+
+  /* ── 그리기 ── */
+  function render(rows) {
+    var p = PROGRAMS[PROGRAM], d = summarize(rows, p);
+    var bal = d.income - d.expense, rate = pct(d.expense, d.income), over = bal < 0;
+
+    // 기간
+    var dates = rows.map(function (r) { return r["날짜"]; }).filter(function (x) { return /^\d{4}-\d{2}-\d{2}/.test(x); }).sort();
+    if (dates.length) {
+      var ym = function (x) { return x.slice(0, 4) + "." + x.slice(5, 7); };
+      var a = ym(dates[0]), b = ym(dates[dates.length - 1]), last = dates[dates.length - 1];
+      $("period").textContent = a === b ? a : a + " – " + b;
+      $("lastDate").textContent = last.slice(0, 4) + "년 " + parseInt(last.slice(5, 7), 10) + "월 " + parseInt(last.slice(8, 10), 10) + "일";
+    }
+
+    // KPI
+    function kpi(label, value, unit, sub, hl) {
+      return '<div class="kpi' + (hl ? " hl" : "") + '"><span class="label">' + label + '</span><span class="value">' + value +
+        "<small>" + unit + '</small></span><span class="sub">' + sub + "</span></div>";
+    }
+    $("kpis").innerHTML =
+      kpi("총 수입", won(d.income), "원", p.income + " 합계") +
+      kpi("총 지출 (집행액)", won(d.expense), "원", d.tx.length + "건 집행") +
+      kpi("수입 대비 지출", f1(rate), "%", '<span class="pill' + (over ? " warn" : "") + '">' + (over ? "수입 초과" : "수입 이내") + "</span>", true) +
+      kpi("잔액", won(bal), "원", over ? "지출이 수입보다 많음" : "아직 쓰지 않은 보조금");
+
+    // 도넛: 수입 100% 중 category별 집행 + 잔액
+    var acc = 0, stops = [];
+    d.cats.forEach(function (c, i) {
+      var w = Math.min(100, pct(c[1], d.income));
+      stops.push(CAT_COLORS[i % CAT_COLORS.length] + " " + acc + "% " + (acc + w) + "%"); acc += w;
+    });
+    stops.push("var(--line) " + Math.min(acc, 100) + "% 100%");
+    $("donut").style.background = "conic-gradient(" + stops.join(",") + ")";
+    $("donutRate").textContent = f1(rate) + "%";
+
+    // category 막대
+    $("cats").innerHTML = d.cats.map(function (c, i) {
+      var col = CAT_COLORS[i % CAT_COLORS.length];
+      return '<div><div class="cat-head"><span class="cat-name">' + esc(c[0]) + "</span>" +
+        '<span class="cat-amt"><b>' + won(c[1]) + '원</b><span class="r">' + f1(pct(c[1], d.income)) + '%</span>' +
+        '<span class="s">집행액 중 ' + f1(pct(c[1], d.expense)) + "%</span></span></div>" +
+        '<div class="track"><div class="fill" style="background:' + col + '" data-w="' + Math.min(100, pct(c[1], d.income)) + '"></div></div></div>';
+    }).join("") + '<div class="scale"><span>0%</span><span>50%</span><span>수입 100%</span></div>';
+
+    // 계정과목 표
+    $("acc").innerHTML =
+      "<thead><tr><th>계정과목</th><th>category</th><th>건수</th><th>집행액(원)</th><th>수입 대비</th></tr></thead><tbody>" +
+      d.accs.map(function (x) {
+        return "<tr><td>" + esc(x[0]) + '</td><td><span class="tag' + (x[1].cat === "운영비" ? " op" : "") + '">' + esc(x[1].cat) +
+          "</span></td><td>" + x[1].n + "</td><td>" + won(x[1].amt) + "</td><td>" + f1(pct(x[1].amt, d.income)) + "%</td></tr>";
+      }).join("") +
+      "</tbody><tfoot><tr><td>합계</td><td></td><td>" + d.tx.length + "</td><td>" + won(d.expense) + "</td><td>" + f1(rate) + "%</td></tr></tfoot>";
+
+    // 월별
+    var mmax = Math.max.apply(null, d.months.map(function (x) { return x[2]; }).concat([1])), cum = 0;
+    $("months").innerHTML = d.months.map(function (x) {
+      cum += x[2];
+      return '<div class="mrow"><span class="m">' + x[0] + '월</span><div><div class="mbar" data-w="' + (x[2] / mmax * 100) + '"></div>' +
+        '<div class="mval"><span>' + won(x[2]) + "원</span><span>누적 " + f1(pct(cum, d.income)) + "%</span></div></div></div>";
+    }).join("");
+
+    // 집행 내역
+    $("fMonth").innerHTML = '<option value="">전체 월</option>' + d.months.filter(function (x) { return x[2] > 0; })
+      .map(function (x) { return '<option value="' + x[0] + '">' + x[0] + "월</option>"; }).join("");
+    $("fCat").innerHTML = '<option value="">전체 category</option>' + d.cats
+      .map(function (c) { return '<option value="' + esc(c[0]) + '">' + esc(c[0]) + "</option>"; }).join("");
+    function drawTx() {
+      var t = $("q").value.trim(), m = $("fMonth").value, c = $("fCat").value;
+      var list = d.tx.filter(function (x) {
+        return (!m || String(x.m) === m) && (!c || x.cat === c) && (!t || (x.acc + " " + x.memo).indexOf(t) >= 0);
+      });
+      var sum = list.reduce(function (s, x) { return s + x.amt; }, 0);
+      $("tx").innerHTML = "<thead><tr><th>날짜</th><th>계정과목</th><th>내용</th><th>금액(원)</th></tr></thead><tbody>" +
+        (list.length ? list.map(function (x) {
+          return "<tr><td>" + esc(x.date) + "</td><td>" + esc(x.acc) + "</td><td>" + esc(x.memo) + "</td><td>" + won(x.amt) + "</td></tr>";
+        }).join("") : '<tr><td colspan="4">조건에 맞는 내역이 없습니다.</td></tr>') + "</tbody>";
+      $("txsum").innerHTML = "<b>" + list.length + "건</b> · 합계 <b>" + won(sum) + "원</b> · 수입 대비 " + f1(pct(sum, d.income)) + "%";
+    }
+    ["q", "fMonth", "fCat"].forEach(function (id) { $(id).addEventListener("input", drawTx); });
+    drawTx();
+
+    $("status").hidden = true;
+    $("content").hidden = false;
+    requestAnimationFrame(function () {
+      document.querySelectorAll("[data-w]").forEach(function (el) { el.style.width = el.getAttribute("data-w") + "%"; });
+    });
+  }
+
+  /* ── 시작 ── */
+  var p = PROGRAMS[PROGRAM];
+  $("app").setAttribute("data-program", PROGRAM);
+  $("pageTitle").innerHTML = "<em>" + p.name + "</em>";
+  $("cols").textContent = p.income + " · " + p.expense;
+  $("tab-" + PROGRAM).setAttribute("aria-current", "page");
+  $("srcFile").textContent = CSV_FILE;
+
+  fetch(CSV_FILE + "?v=" + Date.now(), { cache: "no-store" })
+    .then(function (res) { if (!res.ok) throw new Error(CSV_FILE + " 파일을 찾지 못했습니다 (" + res.status + ")."); return res.text(); })
+    .then(function (t) { render(parseCSV(t)); })
+    .catch(function (err) {
+      var s = $("status"); s.className = "status err";
+      s.innerHTML = "데이터를 불러오지 못했습니다. " + esc(err.message) +
+        "<br>delivery.html과 같은 위치에 CSV 파일이 있는지 확인하세요. 컴퓨터에서 파일을 바로 열면 브라우저가 CSV 읽기를 막으니 GitHub Pages 주소로 확인하세요.";
+    });
+})();
+</script>
+</body>
+</html>
